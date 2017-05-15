@@ -17,7 +17,6 @@ import android.widget.Toast;
 import com.hanrui.android.coolweather.db.City;
 import com.hanrui.android.coolweather.db.County;
 import com.hanrui.android.coolweather.db.Province;
-import com.hanrui.android.coolweather.gson.Weather;
 import com.hanrui.android.coolweather.util.HttpUtil;
 import com.hanrui.android.coolweather.util.Utility;
 
@@ -81,10 +80,17 @@ public class ChooseAreaFragment extends Fragment {
                     queryCounties();
                 }else if(currentLevel==LEVEL_COUNTY){
                     String weatherId=countyList.get(position).getWeatherId();
-                    Intent intent=new Intent(getActivity(), WeatherActivity.class);
-                    intent.putExtra("weather_id",weatherId);
-                    startActivity(intent);
-                    getActivity().finish();
+                    if(getActivity() instanceof MainActivity) {
+                        Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                        intent.putExtra("weather_id", weatherId);
+                        startActivity(intent);
+                        getActivity().finish();
+                    }else if(getActivity() instanceof WeatherActivity){
+                        WeatherActivity activity=(WeatherActivity)getActivity();
+                        activity.drawerLayout.closeDrawers();
+                        activity.swipeRefresh.setRefreshing(true);
+                        activity.requestWeather(weatherId);
+                    }
                 }
             }
         });
@@ -177,11 +183,11 @@ public class ChooseAreaFragment extends Fragment {
                 String responseText=response.body().string();
                 boolean result=false;
                 if("province".equals(type)){
-                    result= Utility.handleProvinceRespose(responseText);
+                    result= Utility.handleProvinceResponse(responseText);
                 }else if("city".equals(type)){
                     result=Utility.handleCityResponse(responseText,selectedProvince.getId());
                 }else if ("county".equals(type)){
-                    result=Utility.hanleCountyResponse(responseText,selectedCity.getId());
+                    result=Utility.handleCountyResponse(responseText,selectedCity.getId());
                 }
                 if(result){
                     getActivity().runOnUiThread(new Runnable(){
